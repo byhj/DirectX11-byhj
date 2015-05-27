@@ -31,12 +31,6 @@ namespace byhj
 		void GetProj(D3DXMATRIX &);
 		void GetWorld(D3DXMATRIX &);
 		void GetView(D3DXMATRIX &);
-		void GetVideoCardInfo(char *, int &);
-
-	private:
-		bool m_vsync_enabled;
-		int m_videoCardMemory;
-		char m_videoCardDescription[128];
 
 		IDXGISwapChain           * pSwapChain;
 		ID3D11Device             * pD3D11Device;

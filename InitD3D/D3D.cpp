@@ -2,9 +2,6 @@
 
 namespace	byhj
 {
-	////////////////////////////////////////////////////////////////////////////////
-	// Filename: D3D.cpp
-	////////////////////////////////////////////////////////////////////////////////
 
 #include "D3D.h"
 
@@ -55,9 +52,6 @@ namespace	byhj
 
 		int error;
 		float fieldOfView, screenAspect;
-
-		// Store the vsync setting.
-		m_vsync_enabled = vsync;
 
 		// Create a DirectX graphics interface factory.
 		result = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
@@ -122,16 +116,6 @@ namespace	byhj
 			return false;
 		}
 
-		// Store the dedicated video card memory in megabytes.
-		m_videoCardMemory = (int)(adapterDesc.DedicatedVideoMemory / 1024 / 1024);
-
-		// Convert the name of the video card to a character array and store it.
-		error = wcstombs_s(&stringLength, m_videoCardDescription, 128, adapterDesc.Description, 128);
-		if(error != 0)
-		{
-			return false;
-		}
-
 		// Release the display mode list.
 		delete [] displayModeList;
 		displayModeList = 0;
@@ -161,17 +145,10 @@ namespace	byhj
 		// Set regular 32-bit surface for the back buffer.
 		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-		// Set the refresh rate of the back buffer.
-		if(m_vsync_enabled)
-		{
-			swapChainDesc.BufferDesc.RefreshRate.Numerator = numerator;
-			swapChainDesc.BufferDesc.RefreshRate.Denominator = denominator;
-		}
-		else
-		{
-			swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
-			swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-		}
+
+		swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
+		swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+
 
 		// Set the usage of the back buffer.
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -439,17 +416,9 @@ namespace	byhj
 
 	void D3D::EndScene()
 	{
-		// Present the back buffer to the screen since rendering is complete.
-		if(m_vsync_enabled)
-		{
-			// Lock to screen refresh rate.
-			pSwapChain->Present(1, 0);
-		}
-		else
-		{
-			// Present as fast as possible.
-			pSwapChain->Present(0, 0);
-		}
+
+		// Present as fast as possible.
+		pSwapChain->Present(0, 0);
 
 		return;
 	}
@@ -487,11 +456,4 @@ namespace	byhj
 		return;
 	}
 
-
-	void D3D::GetVideoCardInfo(char* cardName, int& memory)
-	{
-		strcpy_s(cardName, 128, m_videoCardDescription);
-		memory = m_videoCardMemory;
-		return;
-	}
 }
