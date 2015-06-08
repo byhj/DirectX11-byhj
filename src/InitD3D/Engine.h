@@ -26,7 +26,7 @@ namespace byhj
 
 	private:
 		bool Render();
-		void InitWindow(int screenWidth, int screenHeight);
+		void InitWindow(int &screenWidth, int &screenHeight);
 		void ShutdownWindow();
 
 	private:

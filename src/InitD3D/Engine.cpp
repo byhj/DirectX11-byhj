@@ -103,7 +103,7 @@ namespace byhj
 	}
 
 	////////////////////Init Window //////////////////////////////
-	void Engine::InitWindow(int screenWidth, int screenHeight)
+	void Engine::InitWindow(int &screenWidth, int &screenHeight)
 	{
 		WNDCLASSEX wc;
 		DEVMODE dmScreenSettings;
