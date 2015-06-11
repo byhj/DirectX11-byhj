@@ -26,7 +26,11 @@ $RECYCLE.BIN/
 *.log
 *.ilk
 *.lastbuildstate
-
+*.ktx
+*.sbm
+*.jpg
+*.png
+*.DDS
 # =========================
 # Operating System Files
 # =========================
