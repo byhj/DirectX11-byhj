@@ -1,18 +1,24 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InitD3D", "src\InitD3D\InitD3D.vcxproj", "{1249E60C-0017-41B9-9B28-F4D09282AA53}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "src\Test\Test.vcxproj", "{1EE49382-31F1-42ED-A96B-60C9009A321F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
 		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1249E60C-0017-41B9-9B28-F4D09282AA53}.Debug|Win32.ActiveCfg = Debug|Win32
-		{1249E60C-0017-41B9-9B28-F4D09282AA53}.Debug|Win32.Build.0 = Debug|Win32
-		{1249E60C-0017-41B9-9B28-F4D09282AA53}.Release|Win32.ActiveCfg = Release|Win32
-		{1249E60C-0017-41B9-9B28-F4D09282AA53}.Release|Win32.Build.0 = Release|Win32
+		{1EE49382-31F1-42ED-A96B-60C9009A321F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1EE49382-31F1-42ED-A96B-60C9009A321F}.Debug|Win32.Build.0 = Debug|Win32
+		{1EE49382-31F1-42ED-A96B-60C9009A321F}.Debug|x64.ActiveCfg = Debug|x64
+		{1EE49382-31F1-42ED-A96B-60C9009A321F}.Debug|x64.Build.0 = Debug|x64
+		{1EE49382-31F1-42ED-A96B-60C9009A321F}.Release|Win32.ActiveCfg = Release|Win32
+		{1EE49382-31F1-42ED-A96B-60C9009A321F}.Release|Win32.Build.0 = Release|Win32
+		{1EE49382-31F1-42ED-A96B-60C9009A321F}.Release|x64.ActiveCfg = Release|x64
+		{1EE49382-31F1-42ED-A96B-60C9009A321F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
