@@ -49,6 +49,9 @@ private:
 	std::string directory;
 	std::vector<Texture> textures_loaded;	
 
+	std::vector<int> meshIndexStart;
+	std::vector<int> meshTexture;
+
 	std::vector<XMFLOAT3> vPos;
 	std::vector<unsigned long> vIndex;	
 };
@@ -166,6 +169,7 @@ D3DMesh D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 		//Process one Vertex
 		vertices.push_back(vertex);
 
+		//////////////////Calc the Tangent and BiTangent///////////////////////////////
 		v[j]  = XMLoadFloat3(&vertex.Position);
 		uv[j] = XMLoadFloat2(&vertex.TexCoords );
 		if ( (j+1) % 3 == 0)
@@ -193,7 +197,7 @@ D3DMesh D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 			++j;
 	}
 
-	// Now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+	// Now walk through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
 	for (int i = 0; i < mesh->mNumFaces; i++)
 	{
 		aiFace face = mesh->mFaces[i];
