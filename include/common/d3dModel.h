@@ -1,6 +1,10 @@
 #ifndef D3DMODEL_H
 #define D3DMODEL_H
 
+#ifdef _WIN32
+#define _XM_NO_INTRINSICS_
+#endif 
+
 // Std. Includes
 #include <string>
 #include <fstream>
@@ -13,32 +17,102 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include "d3dMesh.h"
+#include <d3d11.h>
+#include <D3DX11.h>
+#include <xnamath.h>
+#include <D3DX10math.h>
 
-int TextureFromFile(const char* path, std::string directory);
+#include "common/d3dShader.h"
+#include "common/d3dDebug.h"
+
+struct Vertex {
+	// Position
+	XMFLOAT3 Position;
+	// Normal
+	XMFLOAT3 Normal;
+	// TexCoords
+	XMFLOAT2 TexCoords;
+
+	XMFLOAT3 Tangent;
+
+	XMFLOAT3 BiTangent;
+};
+
+
+struct Material
+{
+	Material()
+	{
+		ambient   = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		diffuse   = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		specular  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		emissive  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		shininess = 32.0f;
+		for (int i = 0; i != 4; ++i)
+			hasTex[i] = 0;
+	}
+
+	Material (const Material &mat)
+	{
+		this->ambient   = mat.ambient  ;
+		this->diffuse   = mat.diffuse  ;
+		this->specular  = mat.specular ;
+		this->emissive  = mat.emissive ;
+		this->shininess = mat.shininess;
+
+		for (int i = 0; i != 4; ++i)
+			this->hasTex[i] = hasTex[i];
+	}
+	Material &operator = (const Material &mat)
+	{
+		this->ambient   = mat.ambient  ;
+		this->diffuse   = mat.diffuse  ;
+		this->specular  = mat.specular ;
+		this->emissive  = mat.emissive ;
+		this->shininess = mat.shininess;
+		for (int i = 0; i != 4; ++i)
+			this->hasTex[i] = mat.hasTex[i];
+		return *this;
+	}
+
+	XMFLOAT4 ambient;
+	XMFLOAT4 diffuse;
+	XMFLOAT4 specular;
+	XMFLOAT4 emissive;
+	float shininess;
+	int   hasTex[4];
+};
+
+struct D3DMesh 
+{
+	std::vector<Vertex> VertexData;
+	std::vector<unsigned long> IndexData;
+	std::vector<int> textureIndex;
+	Material mat;
+
+	int m_VertexCount;
+	int m_IndexCount;
+};
+
 
 class D3DModel
 {
 public:
-	D3DModel() {}
+	D3DModel(): textureNum(0){}
+
 	
+	//Loading the model form file if support this format
 	void loadModel(std::string path);
-
-   // Processes a node in a recursive fashion. Processes each individual mesh located at 
-	//the node and repeats this process on its children nodes (if any).
 	void processNode(aiNode* node, const aiScene* scene);
+	void processMesh(aiMesh* mesh, const aiScene* scene);
 
-	//Processes a mesh and return the data information
-	D3DMesh processMesh(aiMesh* mesh, const aiScene* scene);
+	int loadMatTex(aiMaterial* mat, aiTextureType type, std::string typeName);
 
-	std::vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
-
-
-	const std::vector<XMFLOAT3> & GetPos()
+	std::vector<XMFLOAT3>  GetPos()
 	{
 		return vPos;
 	}
-	const std::vector<unsigned long> & GetIndex()
+	std::vector<unsigned long> GetIndex()
 	{
 		return vIndex;
 	}
@@ -46,14 +120,11 @@ private:
 
 	//One model may include many meshes
 	std::vector<D3DMesh> meshes;
+	std::vector<std::string> texturePathes;
 	std::string directory;
-	std::vector<Texture> textures_loaded;	
-
-	std::vector<int> meshIndexStart;
-	std::vector<int> meshTexture;
-
 	std::vector<XMFLOAT3> vPos;
 	std::vector<unsigned long> vIndex;	
+	int textureNum;
 };
 
 
@@ -63,48 +134,44 @@ void D3DModel::loadModel(std::string path)
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 	
-	// Check for errors
-	if (!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
+	if (!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
 	{
 		std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
 		return;
 	}
-
 	// Retrieve the directory path of the filepath
-	this->directory = path.substr(0, path.find_last_of('/'));
+	directory = path.substr(0, path.find_last_of('/'));
 
 	// Process ASSIMP's root node recursively
 	this->processNode(scene->mRootNode, scene);
 }
 
-std::vector<Texture>  D3DModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
+int  D3DModel::loadMatTex(aiMaterial* mat, aiTextureType type, std::string typeName)
 {
-	std::vector<Texture> textures;
+	if (!mat->GetTextureCount(type))
+		return 0;
+
 	for (int i = 0; i < mat->GetTextureCount(type); i++)
 	{
 		aiString str;
 		mat->GetTexture(type, i, &str);
+		std::string path = directory + str.C_Str();
 		// Check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
 		bool skip = false;
-		for (int j = 0; j < textures_loaded.size(); j++)
+		for (int j = 0; j < texturePathes.size(); j++)
 		{
-			if (textures_loaded[j].path == str)
+			if (texturePathes[j] == path)
 			{
-				textures.push_back(textures_loaded[j]);
 				skip = true; // A texture with the same filepath has already been loaded, continue to next one. (optimization)
 				break;
 			}
 		}
 		if (!skip)
 		{   // If texture hasn't been loaded already, load it
-			Texture texture;
-			texture.type = typeName;
-			texture.path = str;
-			textures.push_back(texture);
-			this->textures_loaded.push_back(texture);  // Store it as texture loaded for entire model, to ensure we won't unnecesery load duplicate textures.
+			texturePathes.push_back(path);
 		}
 	}
-	return textures;
+	return 1;
 }
 
 void setColor(aiColor3D &c, XMFLOAT4 &m)
@@ -122,13 +189,10 @@ void setBlend(float blend, Material &mat)
 	mat.emissive.w = blend;
 }
 
-D3DMesh D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
+void D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 {
-	//Mesh Data to fill
-	std::vector<Vertex> vertices;
-	std::vector<unsigned long> indices;
-	std::vector<Texture> textures;
-	std::vector<Material> MaterialData;
+
+	D3DMesh d3dMesh;
 
 	XMVECTOR v[3];
 	XMVECTOR uv[3];
@@ -167,9 +231,8 @@ D3DMesh D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 			vertex.TexCoords = XMFLOAT2(0.0f, 0.0f);
 
 		//Process one Vertex
-		vertices.push_back(vertex);
+		d3dMesh.VertexData.push_back(vertex);
 
-		//////////////////Calc the Tangent and BiTangent///////////////////////////////
 		v[j]  = XMLoadFloat3(&vertex.Position);
 		uv[j] = XMLoadFloat2(&vertex.TexCoords );
 		if ( (j+1) % 3 == 0)
@@ -184,27 +247,27 @@ D3DMesh D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 			XMVECTOR tangent = (deltaPos1 * deltaUV2.y   - deltaPos2 * deltaUV1.y) * r;
 			XMVECTOR bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x) * r;
 
-			XMStoreFloat3(&vertices[i].Tangent, tangent);
-			XMStoreFloat3(&vertices[i-1].Tangent, tangent);
-			XMStoreFloat3(&vertices[i-2].Tangent, tangent);
+			XMStoreFloat3(&d3dMesh.VertexData[i].Tangent,  tangent);
+			XMStoreFloat3(&d3dMesh.VertexData[i-1].Tangent, tangent);
+			XMStoreFloat3(&d3dMesh.VertexData[i-2].Tangent, tangent);
 
-			XMStoreFloat3(&vertices[i].BiTangent, bitangent);
-			XMStoreFloat3(&vertices[i-1].BiTangent, bitangent);
-			XMStoreFloat3(&vertices[i-2].BiTangent, bitangent);
+			XMStoreFloat3(&d3dMesh.VertexData[i].BiTangent,  bitangent);
+			XMStoreFloat3(&d3dMesh.VertexData[i-1].BiTangent, bitangent);
+			XMStoreFloat3(&d3dMesh.VertexData[i-2].BiTangent, bitangent);
 			j = 0;
 		}
 		else
 			++j;
 	}
 
-	// Now walk through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+	// Now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
 	for (int i = 0; i < mesh->mNumFaces; i++)
 	{
 		aiFace face = mesh->mFaces[i];
 		// Retrieve all indices of the face and store them in the indices std::vector
 		for (int j = 0; j < face.mNumIndices; j++)
 		{
-			indices.push_back(face.mIndices[j]);
+			d3dMesh.IndexData.push_back(face.mIndices[j]);
 			//
 			vIndex.push_back(face.mIndices[j]);
 		}
@@ -239,9 +302,9 @@ D3DMesh D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 		if(AI_SUCCESS == material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive) )
 			setColor(emissive, mat.emissive);
 
-		//float shininess = 0.0;
-		//if(AI_SUCCESS == material->Get(AI_MATKEY_SHININESS, shininess))
-		//	mat.shininess = shininess;
+		float shininess = 0.0;
+		if(AI_SUCCESS == material->Get(AI_MATKEY_SHININESS, shininess))
+			mat.shininess = shininess;
 		
 		float blend;
 		material->Get(AI_MATKEY_OPACITY , blend);
@@ -250,21 +313,20 @@ D3DMesh D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 		//std::cout << mat.ambient.w << std::endl;
 
 		// 1. Diffuse maps
-		std::vector<Texture> diffuseMaps = this->loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+		mat.hasTex[0] = loadMatTex(material, aiTextureType_AMBIENT, "texture_ambient");
+		
+		// 1. Diffuse maps
+	    mat.hasTex[1] = loadMatTex(material, aiTextureType_DIFFUSE, "texture_diffuse");
 
 		// 2. Specular maps
-		std::vector<Texture> specularMaps = this->loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-
+		mat.hasTex[2] = loadMatTex(material, aiTextureType_SPECULAR, "texture_specular");
 
 		// 3.normal maps
-		std::vector<Texture> normalMaps = this->loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-	}
+		mat.hasTex[3] = loadMatTex(material, aiTextureType_HEIGHT, "texture_normal");
 
-	// Return a mesh object created from the extracted mesh data
-	return D3DMesh(vertices, indices, textures, mat);
+	}
+	d3dMesh.mat  = mat;
+	meshes.push_back(d3dMesh);
 }
 
 void D3DModel::processNode(aiNode* node, const aiScene* scene)
@@ -272,17 +334,15 @@ void D3DModel::processNode(aiNode* node, const aiScene* scene)
 	// Process each mesh located at the current node
 	for (int i = 0; i < node->mNumMeshes; i++)
 	{
-		// The node object only contains indices to index the actual objects in the scene. 
-		// The scene contains all the data, node is just to keep stuff organized (like relations between nodes).
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		this->meshes.push_back(this->processMesh(mesh, scene));
+		processMesh(mesh, scene);
 	}
-
-	// After we've processed all of the meshes (if any) we then recursively process each of the children nodes
 	for (int i = 0; i < node->mNumChildren; i++)
 	{
 		this->processNode(node->mChildren[i], scene);
 	}
 
 }
+
+
 #endif

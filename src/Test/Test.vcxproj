@@ -132,6 +132,7 @@
     <ClInclude Include="..\..\include\common\d3dShader.h" />
     <ClInclude Include="..\..\include\common\d3dSound.h" />
     <ClInclude Include="..\..\include\common\d3dTimer.h" />
+    <ClInclude Include="cube.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
