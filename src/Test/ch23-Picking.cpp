@@ -11,7 +11,7 @@
 #include "common/d3dFont.h"
 #include "common/d3dTimer.h"
 #include "common/d3dCubemap.h"
-#include "common/d3dModel.h"
+#include "test.h"
 
 #include "PickCam.h"
 
@@ -68,8 +68,7 @@ private:
 	D3DTimer timer;
 	D3DFont font;
 	D3DCamera camera;
-	D3DModel ObjModel;
-	D3DModel BottomModel;
+
 	void DrawFps();
 	void DrawMessage();
 
@@ -94,7 +93,6 @@ bool D3DRenderSystem::v_InitD3D()
 
 void D3DRenderSystem::init_object()
 {
-	font.init(m_pD3D11Device);
 	fps = 0.0f;
 	timer.Reset();
 
@@ -102,15 +100,7 @@ void D3DRenderSystem::init_object()
 	skymap.load_texture(m_pD3D11Device, L"../../media/textures/skymap.dds");
 	skymap.init_shader(m_pD3D11Device, GetHwnd());
 
-	BottomModel.initModel(m_pD3D11Device, m_pD3D11DeviceContext, GetHwnd());
-	BottomModel.loadModel("../../media/objects/bottle.obj");
-
 	camera.InitDirectInput(GetAppInst(), GetHwnd());
-	camera.InitPickModel(m_ScreenWidth, m_ScreenHeight, 20,
-		                 BottomModel.GetPos(), BottomModel.GetIndex(), bottleModel);
-
-	ObjModel.initModel(m_pD3D11Device, m_pD3D11DeviceContext, GetHwnd());
-	ObjModel.loadModel("../../media/objects/ground.obj");
 }
 
 void D3DRenderSystem::UpdateScene()
@@ -146,13 +136,6 @@ void D3DRenderSystem::v_Render()
 	XMMATRIX tView  = camera.GetViewMatrix();
 	XMMATRIX tProj = Proj;
 	meshWorld = Rotation * Scale * Translation;
-	ObjModel.Render(m_pD3D11DeviceContext, meshWorld, tView, tProj);
-
-	////////////////////////////////////////////////////////////////
-	for (int i = 0; i != 20; ++i)
-	{
-		BottomModel.Render(m_pD3D11DeviceContext, bottleModel[i], tView, tProj);
-	}
 
 	DrawMessage();
 	WCHAR scoreInfo[255];
@@ -321,7 +304,6 @@ void D3DRenderSystem::DrawFps()
 		timeElapsed += 1.0f;
 	}	
 
-	font.drawFps(m_pD3D11DeviceContext, (UINT)fps);
 }
 
 void D3DRenderSystem::DrawMessage()

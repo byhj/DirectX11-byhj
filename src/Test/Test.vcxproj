@@ -112,27 +112,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="PickCam.h" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="cubemap.psh" />
     <None Include="cubemap.vsh" />
     <None Include="model.psh" />
     <None Include="model.vsh" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ch22-Normal-Mapping.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\include\common\d3dApp.h" />
-    <ClInclude Include="..\..\include\common\d3dCamera.h" />
-    <ClInclude Include="..\..\include\common\d3dCubemap.h" />
-    <ClInclude Include="..\..\include\common\d3dDebug.h" />
-    <ClInclude Include="..\..\include\common\d3dFont.h" />
-    <ClInclude Include="..\..\include\common\d3dMesh.h" />
-    <ClInclude Include="..\..\include\common\d3dModel.h" />
-    <ClInclude Include="..\..\include\common\d3dRTT.h" />
-    <ClInclude Include="..\..\include\common\d3dShader.h" />
-    <ClInclude Include="..\..\include\common\d3dSound.h" />
-    <ClInclude Include="..\..\include\common\d3dTimer.h" />
-    <ClInclude Include="cube.h" />
+    <ClCompile Include="ch23-Picking.cpp" />
+    <ClCompile Include="test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

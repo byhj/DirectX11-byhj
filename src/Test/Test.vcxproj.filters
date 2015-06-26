@@ -15,60 +15,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PickCam.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="cubemap.psh">
-      <Filter>Resource Files</Filter>
+      <Filter>Source Files</Filter>
     </None>
     <None Include="cubemap.vsh">
-      <Filter>Resource Files</Filter>
+      <Filter>Source Files</Filter>
     </None>
     <None Include="model.psh">
-      <Filter>Resource Files</Filter>
+      <Filter>Source Files</Filter>
     </None>
     <None Include="model.vsh">
-      <Filter>Resource Files</Filter>
+      <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ch22-Normal-Mapping.cpp">
+    <ClCompile Include="ch23-Picking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\include\common\d3dFont.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dMesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dModel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dRTT.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dSound.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dTimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dApp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dCubemap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\common\d3dDebug.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cube.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="test.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

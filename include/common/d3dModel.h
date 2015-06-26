@@ -22,9 +22,6 @@
 #include <xnamath.h>
 #include <D3DX10math.h>
 
-#include "common/d3dShader.h"
-#include "common/d3dDebug.h"
-
 struct Vertex {
 	// Position
 	XMFLOAT3 Position;
@@ -106,7 +103,7 @@ public:
 	void processNode(aiNode* node, const aiScene* scene);
 	void processMesh(aiMesh* mesh, const aiScene* scene);
 
-	int loadMatTex(aiMaterial* mat, aiTextureType type, std::string typeName);
+	int loadMatTex(int &index, aiMaterial* mat, aiTextureType type, std::string typeName);
 
 	std::vector<XMFLOAT3>  GetPos()
 	{
@@ -116,8 +113,8 @@ public:
 	{
 		return vIndex;
 	}
-private:
 
+public:
 	//One model may include many meshes
 	std::vector<D3DMesh> meshes;
 	std::vector<std::string> texturePathes;
@@ -146,7 +143,7 @@ void D3DModel::loadModel(std::string path)
 	this->processNode(scene->mRootNode, scene);
 }
 
-int  D3DModel::loadMatTex(aiMaterial* mat, aiTextureType type, std::string typeName)
+int  D3DModel::loadMatTex(int &index, aiMaterial* mat, aiTextureType type, std::string typeName)
 {
 	if (!mat->GetTextureCount(type))
 		return 0;
@@ -162,6 +159,7 @@ int  D3DModel::loadMatTex(aiMaterial* mat, aiTextureType type, std::string typeN
 		{
 			if (texturePathes[j] == path)
 			{
+				index = j;
 				skip = true; // A texture with the same filepath has already been loaded, continue to next one. (optimization)
 				break;
 			}
@@ -169,6 +167,7 @@ int  D3DModel::loadMatTex(aiMaterial* mat, aiTextureType type, std::string typeN
 		if (!skip)
 		{   // If texture hasn't been loaded already, load it
 			texturePathes.push_back(path);
+			index = texturePathes.size();
 		}
 	}
 	return 1;
@@ -312,20 +311,31 @@ void D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 			setBlend(blend, mat);
 		//std::cout << mat.ambient.w << std::endl;
 
+		int texIndex = 0;
 		// 1. Diffuse maps
-		mat.hasTex[0] = loadMatTex(material, aiTextureType_AMBIENT, "texture_ambient");
-		
+		mat.hasTex[0] = loadMatTex(texIndex, material, aiTextureType_AMBIENT, "texture_ambient");
+		if (mat.hasTex[0])
+		d3dMesh.textureIndex.push_back(texIndex);
+
 		// 1. Diffuse maps
-	    mat.hasTex[1] = loadMatTex(material, aiTextureType_DIFFUSE, "texture_diffuse");
+	    mat.hasTex[1] = loadMatTex(texIndex, material, aiTextureType_DIFFUSE, "texture_diffuse");
+		if (mat.hasTex[1])
+			d3dMesh.textureIndex.push_back(texIndex);;
 
 		// 2. Specular maps
-		mat.hasTex[2] = loadMatTex(material, aiTextureType_SPECULAR, "texture_specular");
+		mat.hasTex[2] = loadMatTex(texIndex, material, aiTextureType_SPECULAR, "texture_specular");
+		if (mat.hasTex[2])
+			d3dMesh.textureIndex.push_back(texIndex);
 
 		// 3.normal maps
-		mat.hasTex[3] = loadMatTex(material, aiTextureType_HEIGHT, "texture_normal");
-
+		mat.hasTex[3] = loadMatTex(texIndex, material, aiTextureType_HEIGHT, "texture_normal");
+		if (mat.hasTex[3])
+			d3dMesh.textureIndex.push_back(texIndex);
 	}
 	d3dMesh.mat  = mat;
+	d3dMesh.m_IndexCount = d3dMesh.IndexData.size();
+	d3dMesh.m_VertexCount = d3dMesh.VertexData.size();
+
 	meshes.push_back(d3dMesh);
 }
 
