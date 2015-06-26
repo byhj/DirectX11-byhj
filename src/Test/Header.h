@@ -19,6 +19,19 @@ public:
 		ModelShader.use(pD3D11DeviceContext);
 
 		pD3D11DeviceContext->PSSetSamplers( 0, 1, &m_pTexSamplerState );
+		pD3D11DeviceContext->PSSetShaderResources( 0, 2, &m_pTextures[0]);
+		cbMatrix.Model = XMMatrixTranspose(model);
+		cbMatrix.View  = XMMatrixTranspose(view);
+		cbMatrix.Porj  = XMMatrixTranspose(proj);
+		pD3D11DeviceContext->UpdateSubresource(m_pMVPBuffer, 0, NULL, &cbMatrix, 0, 0 );
+		pD3D11DeviceContext->VSSetConstantBuffers( 0, 1, &m_pMVPBuffer);
+
+		unsigned int stride;
+		unsigned int offset;
+		stride = sizeof(Vertex); 
+		offset = 0;
+		pD3D11DeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		pD3D11DeviceContext->IASetVertexBuffers( 0, 1, &m_pVertexBuffer, &stride, &offset);
 
 		int startIndex = 0;
 		for (int i = 0; i < TestModel.meshes.size(); i++)
@@ -28,9 +41,17 @@ public:
 				pD3D11DeviceContext->OMSetBlendState(Transparency, blendFactor, 0xffffffff);
 
 //			pD3D11DeviceContext->RSSetState(m_pRasterState);
+			cbMat.ambient = TestModel.meshes[i].mat.ambient;
+			cbMat.diffuse = TestModel.meshes[i].mat.diffuse;
+			cbMat.specular = TestModel.meshes[i].mat.specular;
+			cbMat.emissive = TestModel.meshes[i].mat.emissive;
+            for (int j = 0; j != 4; ++j)
+				cbMat.hasTex[j] = TestModel.meshes[i].mat.hasTex[j];
+
 			pD3D11DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			pD3D11DeviceContext->UpdateSubresource(m_pMatBuffer, 0, NULL, &cbMat, 0, 0 );
 			pD3D11DeviceContext->PSSetConstantBuffers(0, 1, &m_pMatBuffer);
+
 			if (i == 0)
 				pD3D11DeviceContext->DrawIndexed(TestModel.meshes[i].m_IndexCount, 0, 0);
 			else
@@ -61,8 +82,7 @@ private:
 		D3DXVECTOR4 diffuse;
 		D3DXVECTOR4 specular;
 		D3DXVECTOR4 emissive;
-		float   shininess;
-		int     hasTex[4];
+		float hasTex[4];
 	};
 	MaterialBuffer cbMat;
 
@@ -73,7 +93,7 @@ private:
 
 	Shader ModelShader;
 
-	ID3D11ShaderResourceView *m_pTexture;
+	ID3D11ShaderResourceView *m_pTextures[4];
 	ID3D11ShaderResourceView *m_pShaderResourceView;
 	ID3D11DepthStencilView   *m_pDepthStencilView;
 	ID3D11Texture2D          *m_pDepthStencilBuffer;
@@ -103,9 +123,10 @@ void Test::init_buffer(ID3D11Device *pD3D11Device)
 	VertexBufferDesc.MiscFlags           = 0;
 	VertexBufferDesc.StructureByteStride = 0;
 
+	std::vector<Vertex> vpos = TestModel.GetPos();
 	// Give the subresource structure a pointer to the vertex data.
 	D3D11_SUBRESOURCE_DATA VBO;
-	VBO.pSysMem          = &TestModel.GetPos();
+	VBO.pSysMem          = &vpos[0];
 	VBO.SysMemPitch      = 0;
 	VBO.SysMemSlicePitch = 0;
 
@@ -127,9 +148,10 @@ void Test::init_buffer(ID3D11Device *pD3D11Device)
 	IndexBufferDesc.MiscFlags           = 0;
 	IndexBufferDesc.StructureByteStride = 0;
 
+	std::vector<unsigned long> vIndex = TestModel.GetIndex();
 	// Give the subresource structure a pointer to the index data.
 	D3D11_SUBRESOURCE_DATA IBO;
-	IBO.pSysMem          = &TestModel.GetIndex();
+	IBO.pSysMem          = &vIndex[0];
 	IBO.SysMemPitch      = 0;
 	IBO.SysMemSlicePitch = 0;
 
@@ -156,7 +178,14 @@ void Test::init_buffer(ID3D11Device *pD3D11Device)
 	matDesc.MiscFlags      = 0;
 	hr = pD3D11Device->CreateBuffer(&matDesc, NULL, &m_pMatBuffer);
 	DebugHR(hr);
-
+	for (int i = 0; i != TestModel.texturePathes.size(); ++i)
+	{
+	  std::string str = TestModel.texturePathes[i];
+	  std::wstring widestr = std::wstring(str.begin(), str.end());
+	  const WCHAR *texFile = widestr.c_str();
+	  hr = D3DX11CreateShaderResourceViewFromFile(pD3D11Device, texFile, NULL,NULL, &m_pTextures[i], NULL);
+	  DebugHR(hr);
+	}
 }
 
 void Test::initModel(ID3D11Device *pD3D11Device, ID3D11DeviceContext *pD3D11DeviceContext, HWND hWnd)

@@ -5,8 +5,7 @@ struct Material
    float4 diffuse;
    float4 specular;
    float4 emissive;
-   float  shininess;
-   int    hasTex[4];
+   float4 hasTex;
 };
 
 cbuffer MaterialBuffer
@@ -41,17 +40,17 @@ float4 PS(VS_OUT ps_in) : SV_TARGET
     float4 ambient  = cbMat.ambient;
 	float4 diffuse  = cbMat.diffuse;
 	float4 specular = cbMat.specular;
-	float3 lightDir = float3(0.5f, 0.75f, -0.5f);
+	float3 lightDir = float3(0.5f, 0.75f, -1.0f);
 
 	//Ambient texture
-	if ( cbMat.hasTex[0] )
+	if (cbMat.hasTex[0] > 0.0)
 	{
 	   float4 ambientTexColor = ambientTex.Sample(texState, ps_in.Tex);
 	   ambient *= ambientTexColor;
 	}
 
 	//Diffuse texture
-	if (cbMat.hasTex[1])
+	if (cbMat.hasTex[1] > 0.0)
 	{
 		diffuse *= max(0.0, dot(ps_in.Normal, lightDir) ); 
 		float4 diffuseTexColor = diffuseTex.Sample(texState, ps_in.Tex);
@@ -59,20 +58,20 @@ float4 PS(VS_OUT ps_in) : SV_TARGET
 	}
 
 	//Specular texture
-	if (cbMat.hasTex[2])
+	if (cbMat.hasTex[2] > 0.0)
 	{
 	   float3 half_vector = normalize(lightDir + normalize(ps_in.WorldPos) );
-	   float intensity = pow( max(0.0f, dot(ps_in.Normal, half_vector) ), cbMat.shininess);
+	   float intensity = pow( max(0.0f, dot(ps_in.Normal, half_vector) ), 32.0f);
 	   float4 specularTexColor = specularTex.Sample(texState, ps_in.Tex);
 	   specular *= intensity;
 	   specular *= specularTexColor;
 	}
 
 	//Normal texture
-	if (cbMat.hasTex[3])
+	if (cbMat.hasTex[3] > 2.0)
 	{
 	   //Reset the diffuse 
-	    //difuse = cbMat.diffuse;
+	    diffuse = cbMat.diffuse;
 
 	    float4 normalMap = normalTex.Sample(texState, ps_in.Tex );
 

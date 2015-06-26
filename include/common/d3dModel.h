@@ -42,8 +42,7 @@ struct Material
 	D3DXVECTOR4 diffuse;
 	D3DXVECTOR4 specular;
 	D3DXVECTOR4 emissive;
-	float shininess;
-	int   hasTex[4];
+	float hasTex[4];
 };
 
 struct D3DMesh 
@@ -71,9 +70,9 @@ public:
 
 	int loadMatTex(int &index, aiMaterial* mat, aiTextureType type, std::string typeName);
 
-	std::vector<XMFLOAT3>  GetPos()
+	std::vector<Vertex>  GetPos()
 	{
-		return vPos;
+		return vVertex;
 	}
 	std::vector<unsigned long> GetIndex()
 	{
@@ -86,6 +85,7 @@ public:
 	std::vector<std::string> texturePathes;
 	std::string directory;
 
+	std::vector<Vertex> vVertex;
 	std::vector<XMFLOAT3> vPos;
 	std::vector<unsigned long> vIndex;	
 };
@@ -118,7 +118,7 @@ int  D3DModel::loadMatTex(int &index, aiMaterial* mat, aiTextureType type, std::
 	{
 		aiString str;
 		mat->GetTexture(type, i, &str);
-		std::string path = directory + str.C_Str();
+		std::string path = directory + '/' +str.C_Str();
 		// Check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
 		bool skip = false;
 		for (int j = 0; j < texturePathes.size(); j++)
@@ -224,6 +224,8 @@ void D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 		else
 			++j;
 	}
+	 for (int i = 0; i != d3dMesh.VertexData.size(); ++i)
+		 vVertex.push_back(d3dMesh.VertexData[i]);
 
 	// Now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
 	for (int i = 0; i < mesh->mNumFaces; i++)
@@ -267,13 +269,12 @@ void D3DModel::processMesh(aiMesh* mesh, const aiScene* scene)
 		if(AI_SUCCESS == material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive) )
 			setColor(emissive, mat.emissive);
 
-		float shininess = 0.0;
-		if(AI_SUCCESS == material->Get(AI_MATKEY_SHININESS, shininess))
-			mat.shininess = shininess;
+		//float shininess = 0.0;
+		//if(AI_SUCCESS == material->Get(AI_MATKEY_SHININESS, shininess))
+			//mat.shininess = shininess;
 		
 		float blend;
 		material->Get(AI_MATKEY_OPACITY , blend);
-		if (blend < 1.0f)
 			setBlend(blend, mat);
 		//std::cout << mat.ambient.w << std::endl;
 

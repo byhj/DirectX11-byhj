@@ -78,7 +78,6 @@ private:
 	WCHAR m_videoCardInfo[255];
 	float fps;
 };
-
 CALL_MAIN(D3DRenderSystem);
 
 bool D3DRenderSystem::v_InitD3D()
@@ -101,8 +100,8 @@ void D3DRenderSystem::init_object()
 
 	test.initModel(m_pD3D11Device, m_pD3D11DeviceContext, GetHwnd());
 	test.init_buffer(m_pD3D11Device);
-
-	camera.InitDirectInput(GetAppInst(), GetHwnd());
+	
+	//camera.InitDirectInput(GetAppInst(), GetHwnd());
 }
 
 void D3DRenderSystem::UpdateScene()
@@ -127,7 +126,7 @@ void D3DRenderSystem::v_Render()
 
 	skymap.Render(m_pD3D11DeviceContext, MVP);
 
-	camera.DetectInput(timer.GetDeltaTime(), GetHwnd());
+	//camera.DetectInput(timer.GetDeltaTime()/ 100.0f, GetHwnd());
 	//////////////////////////////////////Scene///////////////////////////////////
 	XMMATRIX meshWorld = XMMatrixIdentity();
 	//Define cube1's world space matrix
@@ -135,10 +134,10 @@ void D3DRenderSystem::v_Render()
 	Scale = XMMatrixScaling( 1.0f, 1.0f, 1.0f );
 	Translation = XMMatrixTranslation( 0.0f, 0.0f, 0.0f );
 
-	XMMATRIX tView  = camera.GetViewMatrix();
+	//XMMATRIX tView  = camera.GetViewMatrix();
 	XMMATRIX tProj = Proj;
 	meshWorld = Rotation * Scale * Translation;
-	test.Render(m_pD3D11DeviceContext, meshWorld, tView, tProj);
+	test.Render(m_pD3D11DeviceContext, meshWorld, View, tProj);
 	UpdateScene();
    
 	EndScene();
