@@ -4,7 +4,7 @@
 #include "common/d3dModel.h"
 #include "common/d3dShader.h"
 #include "common/d3dDebug.h"
-
+#include "D3DX10math.h"
 class Test
 {
 public:
@@ -27,26 +27,26 @@ public:
 			if (TestModel.meshes[i].mat.ambient.w < 1.0f)
 				pD3D11DeviceContext->OMSetBlendState(Transparency, blendFactor, 0xffffffff);
 
-			pD3D11DeviceContext->RSSetState(m_pRasterState);
+//			pD3D11DeviceContext->RSSetState(m_pRasterState);
 			pD3D11DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			pD3D11DeviceContext->UpdateSubresource(m_pMatBuffer, 0, NULL, &TestModel.meshes[i].mat, 0, 0 );
+			pD3D11DeviceContext->UpdateSubresource(m_pMatBuffer, 0, NULL, &cbMat, 0, 0 );
 			pD3D11DeviceContext->PSSetConstantBuffers(0, 1, &m_pMatBuffer);
 			if (i == 0)
-			   pD3D11DeviceContext->DrawIndexed(TestModel.meshes[i].m_IndexCount, 0, 0);
+				pD3D11DeviceContext->DrawIndexed(TestModel.meshes[i].m_IndexCount, 0, 0);
 			else
-               pD3D11DeviceContext->DrawIndexed(TestModel.meshes[i].m_IndexCount, startIndex + TestModel.meshes[i-1].m_IndexCount, 0);
-			
+				pD3D11DeviceContext->DrawIndexed(TestModel.meshes[i].m_IndexCount, startIndex + TestModel.meshes[i-1].m_IndexCount, 0);
+
 			pD3D11DeviceContext->OMSetBlendState(0, 0, 0xffffffff);
 		}
 	}
 
-	void initModel(ID3D11Device *pD3D11Device, ID3D11DeviceContext *pD3D11DeviceContext, HWND hWnd);
-	void init_shader(ID3D11Device *pD3D11Device, HWND hWnd);
+
 	void init_buffer(ID3D11Device *pD3D11Device);
+	void initModel(ID3D11Device *pD3D11Device, ID3D11DeviceContext *pD3D11DeviceContext, HWND hWnd);
 
 private:
 	D3DModel TestModel;
-
+	void init_shader(ID3D11Device *pD3D11Device, HWND hWnd);
 	struct MatrixBuffer
 	{
 		XMMATRIX Model;
@@ -57,10 +57,10 @@ private:
 
 	struct MaterialBuffer
 	{
-		XMFLOAT4 ambient;
-		XMFLOAT4 diffuse;
-		XMFLOAT4 specular;
-		XMFLOAT4 emissive;
+		D3DXVECTOR4 ambient ;
+		D3DXVECTOR4 diffuse;
+		D3DXVECTOR4 specular;
+		D3DXVECTOR4 emissive;
 		float   shininess;
 		int     hasTex[4];
 	};
@@ -71,22 +71,19 @@ private:
 	ID3D11Buffer *m_pMVPBuffer;
 	ID3D11Buffer *m_pMatBuffer;
 
-	ID3D11Device *pD3D11Device;
-	ID3D11DeviceContext *pD3D11DeviceContext; 
-	ID3D11ShaderResourceView *m_pTexture;
-	HWND hWnd;
-
 	Shader ModelShader;
-	ID3D11SamplerState   *m_pTexSamplerState;
-	ID3D11BlendState     *Transparency;
 
-	int m_VertexCount;
-	int m_IndexCount;
-
+	ID3D11ShaderResourceView *m_pTexture;
 	ID3D11ShaderResourceView *m_pShaderResourceView;
 	ID3D11DepthStencilView   *m_pDepthStencilView;
 	ID3D11Texture2D          *m_pDepthStencilBuffer;
 	ID3D11RasterizerState    *m_pRasterState;
+	ID3D11SamplerState       *m_pTexSamplerState;
+	ID3D11BlendState         *Transparency;
+
+	int m_VertexCount;
+	int m_IndexCount;
+
 };
 
 void Test::init_buffer(ID3D11Device *pD3D11Device)
@@ -94,8 +91,8 @@ void Test::init_buffer(ID3D11Device *pD3D11Device)
 	HRESULT hr;
 
 	///////////////////////////Vertex Buffer ////////////////////////////////
-	for (int i = 0; TestModel.meshes.size(); ++i)
-	    m_VertexCount += TestModel.meshes[i].m_VertexCount;
+	for (int i = 0; i != TestModel.meshes.size(); ++i)
+		m_VertexCount += TestModel.meshes[i].m_VertexCount;
 
 	// Set up the description of the static vertex buffer.
 	D3D11_BUFFER_DESC VertexBufferDesc;
@@ -118,7 +115,7 @@ void Test::init_buffer(ID3D11Device *pD3D11Device)
 
 	/////////////////////////////////Index Buffer ///////////////////////////////////////
 
-	for (int i = 0; TestModel.meshes.size(); ++i)
+	for (int i = 0; i != TestModel.meshes.size(); ++i)
 		m_IndexCount += TestModel.meshes[i].m_IndexCount;
 
 	// Set up the description of the static index buffer.
@@ -161,13 +158,11 @@ void Test::init_buffer(ID3D11Device *pD3D11Device)
 	DebugHR(hr);
 
 }
+
 void Test::initModel(ID3D11Device *pD3D11Device, ID3D11DeviceContext *pD3D11DeviceContext, HWND hWnd)
 {
 	TestModel.loadModel("../../media/objects/ground.obj");
 
-	this->pD3D11Device = pD3D11Device;
-	this->pD3D11DeviceContext = pD3D11DeviceContext;
-	this->hWnd = hWnd;
 	init_shader(pD3D11Device, hWnd);
 
 	// Create a texture sampler state description.
@@ -192,16 +187,6 @@ void Test::initModel(ID3D11Device *pD3D11Device, ID3D11DeviceContext *pD3D11Devi
 	DebugHR(hr);
 
 	///////////////////////////////////////////////////////////////////
-	D3D11_BUFFER_DESC cbMaterialDesc;	
-	ZeroMemory(&cbMaterialDesc, sizeof(D3D11_BUFFER_DESC));
-	cbMaterialDesc.Usage          = D3D11_USAGE_DEFAULT;
-	cbMaterialDesc.ByteWidth      = sizeof(Material);
-	cbMaterialDesc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
-	cbMaterialDesc.CPUAccessFlags = 0;
-	cbMaterialDesc.MiscFlags      = 0;
-	hr = pD3D11Device->CreateBuffer(&cbMaterialDesc, NULL, &m_pMatBuffer);
-	DebugHR(hr);
-
 	D3D11_BLEND_DESC blendDesc;
 	ZeroMemory( &blendDesc, sizeof(blendDesc) );
 	D3D11_RENDER_TARGET_BLEND_DESC rtbd;

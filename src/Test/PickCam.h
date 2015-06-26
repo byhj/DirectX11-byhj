@@ -5,6 +5,7 @@
 #include <d3d11.h>
 #include <xnamath.h>
 #include <vector>
+#include <D3DX10math.h>
 
 class D3DCamera
 {

@@ -38,44 +38,10 @@ struct Vertex {
 
 struct Material
 {
-	Material()
-	{
-		ambient   = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-		diffuse   = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-		specular  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-		emissive  = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-		shininess = 32.0f;
-		for (int i = 0; i != 4; ++i)
-			hasTex[i] = 0;
-	}
-
-	Material (const Material &mat)
-	{
-		this->ambient   = mat.ambient  ;
-		this->diffuse   = mat.diffuse  ;
-		this->specular  = mat.specular ;
-		this->emissive  = mat.emissive ;
-		this->shininess = mat.shininess;
-
-		for (int i = 0; i != 4; ++i)
-			this->hasTex[i] = hasTex[i];
-	}
-	Material &operator = (const Material &mat)
-	{
-		this->ambient   = mat.ambient  ;
-		this->diffuse   = mat.diffuse  ;
-		this->specular  = mat.specular ;
-		this->emissive  = mat.emissive ;
-		this->shininess = mat.shininess;
-		for (int i = 0; i != 4; ++i)
-			this->hasTex[i] = mat.hasTex[i];
-		return *this;
-	}
-
-	XMFLOAT4 ambient;
-	XMFLOAT4 diffuse;
-	XMFLOAT4 specular;
-	XMFLOAT4 emissive;
+	D3DXVECTOR4 ambient;
+	D3DXVECTOR4 diffuse;
+	D3DXVECTOR4 specular;
+	D3DXVECTOR4 emissive;
 	float shininess;
 	int   hasTex[4];
 };
@@ -95,7 +61,7 @@ struct D3DMesh
 class D3DModel
 {
 public:
-	D3DModel(): textureNum(0){}
+	D3DModel(){}
 
 	
 	//Loading the model form file if support this format
@@ -119,9 +85,9 @@ public:
 	std::vector<D3DMesh> meshes;
 	std::vector<std::string> texturePathes;
 	std::string directory;
+
 	std::vector<XMFLOAT3> vPos;
 	std::vector<unsigned long> vIndex;	
-	int textureNum;
 };
 
 
@@ -173,7 +139,7 @@ int  D3DModel::loadMatTex(int &index, aiMaterial* mat, aiTextureType type, std::
 	return 1;
 }
 
-void setColor(aiColor3D &c, XMFLOAT4 &m)
+void setColor(aiColor3D &c, D3DXVECTOR4 &m)
 {
 	m.x = c[0];
 	m.y = c[1];

@@ -11,8 +11,8 @@
 #include "common/d3dFont.h"
 #include "common/d3dTimer.h"
 #include "common/d3dCubemap.h"
-#include "test.h"
 
+#include "Header.h"
 #include "PickCam.h"
 
 class D3DRenderSystem: public D3DApp
@@ -66,7 +66,6 @@ private:
 	///////////////**************new**************////////////////////
 	D3DSkymap skymap;
 	D3DTimer timer;
-	D3DFont font;
 	D3DCamera camera;
 
 	void DrawFps();
@@ -74,7 +73,7 @@ private:
 
 	XMMATRIX View, Model, Proj;
 	XMMATRIX bottleModel[20];
-
+	Test test;
 	int m_videoCardMemory;
 	WCHAR m_videoCardInfo[255];
 	float fps;
@@ -99,6 +98,9 @@ void D3DRenderSystem::init_object()
 	skymap.createSphere(m_pD3D11Device, 10, 10);
 	skymap.load_texture(m_pD3D11Device, L"../../media/textures/skymap.dds");
 	skymap.init_shader(m_pD3D11Device, GetHwnd());
+
+	test.initModel(m_pD3D11Device, m_pD3D11DeviceContext, GetHwnd());
+	test.init_buffer(m_pD3D11Device);
 
 	camera.InitDirectInput(GetAppInst(), GetHwnd());
 }
@@ -136,12 +138,7 @@ void D3DRenderSystem::v_Render()
 	XMMATRIX tView  = camera.GetViewMatrix();
 	XMMATRIX tProj = Proj;
 	meshWorld = Rotation * Scale * Translation;
-
-	DrawMessage();
-	WCHAR scoreInfo[255];
-	swprintf(scoreInfo, L"Score: %d ", camera.GetScore());
-	font.drawText(m_pD3D11DeviceContext, scoreInfo, 22.0f, 10.0f, 100.0f, 0xff0099ff);
-
+	test.Render(m_pD3D11DeviceContext, meshWorld, tView, tProj);
 	UpdateScene();
    
 	EndScene();
@@ -310,9 +307,6 @@ void D3DRenderSystem::DrawMessage()
 {
 	WCHAR WinInfo[255];
 	swprintf(WinInfo, L"Window Size: %d x %d", m_ScreenWidth, m_ScreenHeight);
-	DrawFps();
-	font.drawText(m_pD3D11DeviceContext, WinInfo, 22.0f, 10.0f, 40.0f, 0xff0099ff);
-	font.drawText(m_pD3D11DeviceContext, m_videoCardInfo, 22.0f, 10.0f, 70.0f, 0xff0099ff);
 }
 
 void  D3DRenderSystem::BeginScene()
